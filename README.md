@@ -39,6 +39,25 @@ dotnet build -c Release
 
 未預期的例外會寫到 `%TEMP%\TwMarketWidget-crash.txt`（無邊框視窗出事時不會只是無聲消失）。
 
+## 發佈
+
+推一個 `v` 開頭的 tag 就會跑 `.github/workflows/release.yml`，自動建置並開一個 GitHub Release：
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+每次會產出兩包 win-x64 單一執行檔：
+
+| 檔名 | 說明 |
+| --- | --- |
+| `TwMarketWidget-<版本>-win-x64-framework-dependent.zip` | 約 0.3 MB，需要先裝 [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| `TwMarketWidget-<版本>-win-x64-self-contained.zip` | 約 65 MB，內含執行環境，解壓縮就能跑 |
+
+也可以在 Actions 頁面手動觸發（`workflow_dispatch`），只會產生 artifact、不會建 Release。
+tag 上的版本號會寫進組件版本，例如 `v1.2.3` → `1.2.3`。
+
 ## 新增商品
 
 在下方輸入代號、選市場別後按「加入」（或按 Enter）：

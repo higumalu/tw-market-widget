@@ -1,0 +1,100 @@
+name: Release
+
+# 推 v 開頭的 tag 就自動建置並發佈 Release，例如：
+#   git tag v1.0.0 && git push origin v1.0.0
+# 也可以在 Actions 頁面手動觸發，只產出 artifact 不建 Release。
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 版本號（手動觸發時用，例如 1.0.0）
+        required: false
+        default: 0.0.0-dev
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        include:
+          # 需要先裝 .NET 8 Desktop Runtime，檔案小
+          - kind: framework-dependent
+            self_contained: 'false'
+          # 內含執行環境，下載後直接跑，檔案大
+          - kind: self-contained
+            self_contained: 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: 決定版本號
+        id: ver
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -like 'refs/tags/v*') {
+            $version = $env:GITHUB_REF -replace '^refs/tags/v', ''
+          } else {
+            $version = '${{ github.event.inputs.version }}'
+          }
+          if ([string]::IsNullOrWhiteSpace($version)) { $version = '0.0.0' }
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "版本號：$version"
+
+      - name: 建置並發佈
+        shell: pwsh
+        run: |
+          dotnet publish TwMarketWidget.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained ${{ matrix.self_contained }} `
+            -p:Version=${{ steps.ver.outputs.version }} `
+            -p:PublishSingleFile=true `
+            -p:DebugType=embedded `
+            -o publish
+
+      - name: 打包 zip
+        id: pack
+        shell: pwsh
+        run: |
+          $name = "TwMarketWidget-${{ steps.ver.outputs.version }}-win-x64-${{ matrix.kind }}.zip"
+          Compress-Archive -Path publish/* -DestinationPath $name -Force
+          "name=$name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.kind }}
+          path: ${{ steps.pack.outputs.name }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: 建立 Release 並上傳
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          if ! gh release view "$tag" > /dev/null 2>&1; then
+            gh release create "$tag" --title "$tag" --generate-notes
+          fi
+          gh release upload "$tag" artifacts/*.zip --clobber
