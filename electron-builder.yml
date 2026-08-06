@@ -1,0 +1,51 @@
+# 打包設定 —— 刻意選對防毒最友善的組合
+#
+# 為什麼這樣設(避免被防毒／EDR 誤判):
+#   1. 「不用」portable / 單一自解壓 exe。portable target 會產生一個開機時把整包
+#      解壓到 %TEMP% 再執行的 stub —— 這正是 packer/dropper 的行為特徵,啟發式引擎
+#      最愛擋。改用 dir(免安裝資料夾)與 nsis(標準安裝器),兩者都不做執行期自解壓。
+#   2. 保留完整版本資訊與發行者中繼資料(productName / appId / 版本),資訊齊全的
+#      執行檔比空白中繼資料的可疑度低。
+#   3. asar:true 只是把前端資源打包成一個檔,不是執行期自解壓,對誤判無影響。
+#   4. 真正一勞永逸的兩件事仍要自己補:(a) 用程式碼簽章憑證簽 exe(見下方註解的
+#      hook);(b) 發佈時避免 MOTW —— 讓使用者本機 build、或走 winget/已信任安裝管道。
+
+appId: com.higumalu.twmarketwidget
+productName: TwMarketWidget
+copyright: Copyright © 2026 higumalu
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - src/**/*
+  - package.json
+
+asar: true
+
+# 免安裝資料夾(誤判面積最小):整包複製到別台,雙擊 TwMarketWidget.exe 就能跑,
+# 沒有任何執行期解壓縮。這是最推薦的散布方式。
+win:
+  target:
+    - target: dir
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+  #
+  # 有程式碼簽章憑證時,把下面解除註解(這是消除防毒告警最有效的一招):
+  # signtoolOptions:
+  #   certificateFile: path\to\cert.pfx
+  #   certificatePassword: ${env.CSC_KEY_PASSWORD}
+  #   signingHashAlgorithms:
+  #     - sha256
+  #   rfc3161TimeStampServer: http://timestamp.digicert.com
+
+# 標準 NSIS 安裝器:給想要「開始功能表捷徑 + 解除安裝」的使用者。
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-${version}-setup.${ext}
+  shortcutName: 台股即時報價

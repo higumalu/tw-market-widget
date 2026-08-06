@@ -1,0 +1,20 @@
+{
+  "name": "tw-market-electron",
+  "version": "1.0.0",
+  "description": "台股即時報價懸浮小工具（Electron 版）— 用公開來源顯示台灣股票、指數與期貨的即時報價",
+  "author": {
+    "name": "higumalu"
+  },
+  "license": "MIT",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "pack:dir": "electron-builder --win dir",
+    "pack:nsis": "electron-builder --win nsis",
+    "dist": "electron-builder --win dir nsis"
+  },
+  "devDependencies": {
+    "electron": "^32.2.0",
+    "electron-builder": "^25.1.8"
+  }
+}

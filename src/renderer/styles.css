@@ -1,0 +1,376 @@
+/* 配色沿用 C# 版 Themes\Dark.xaml,力求視覺一致。 */
+:root {
+  --bg-color: #14171c;
+  --surface: #1b1f26;
+  --border: #2c323c;
+  --text: #e6eaf0;
+  --muted: #8a93a2;
+  --accent: #4c8dff;
+  --error: #ffb4a2;
+  --up: #f45151;
+  --down: #3fc17a;
+  --flat: #c8cdd6;
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --header-overlay: rgba(0, 0, 0, 0.25);
+  --row-overlay: rgba(255, 255, 255, 0.08);
+  --selection: rgba(61, 123, 214, 0.33);
+  --bg-opacity: 0.85;
+  --mono: Consolas, "Cascadia Mono", "Microsoft JhengHei UI", monospace;
+  --sans: "Microsoft JhengHei UI", "PingFang TC", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: var(--sans);
+  color: var(--text);
+  font-size: 13px;
+  user-select: none;
+  cursor: default;
+}
+
+/* 懸浮玻璃外框 */
+.app {
+  position: relative;
+  margin: 4px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+body.full .app {
+  height: calc(100vh - 8px);
+}
+body.compact .app {
+  height: auto;
+}
+
+/* 只有底色套不透明度,文字永遠實心 —— 對應 WPF 只調 Border.Background 的 Opacity */
+.bg {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-color);
+  opacity: var(--bg-opacity);
+  z-index: 0;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px 8px;
+  gap: 0;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 11px;
+}
+.mono {
+  font-family: var(--mono);
+}
+
+/* 依模式顯示／隱藏 */
+body.full .compact-only {
+  display: none;
+}
+body.compact .full-only {
+  display: none !important;
+}
+
+/* 標題列(可拖曳) */
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  -webkit-app-region: drag;
+  flex: 0 0 auto;
+}
+.title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.subtitle {
+  color: var(--muted);
+  font-size: 11px;
+}
+.caption-btns {
+  margin-left: auto;
+  display: flex;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+button {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  margin: 0 2px;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 13px;
+}
+button:hover {
+  background: #262c36;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.cap {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  width: 30px;
+  height: 22px;
+  padding: 0;
+  font-size: 12px;
+}
+.cap:hover {
+  background: #262c36;
+  color: var(--text);
+}
+#btn-close:hover {
+  background: #a13b3b;
+  color: #fff;
+}
+
+/* 工具列 */
+.toolbar {
+  display: flex;
+  align-items: center;
+  margin: 6px 0 8px;
+  flex: 0 0 auto;
+}
+.tool-left,
+.tool-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tool-right {
+  margin-left: auto;
+}
+input[type="range"] {
+  width: 110px;
+  accent-color: var(--accent);
+}
+.chk {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text);
+  margin: 0 4px;
+}
+.chk input {
+  accent-color: var(--accent);
+}
+
+input.num-input,
+input.code-input,
+select {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-family: var(--sans);
+  font-size: 13px;
+}
+input.num-input {
+  width: 46px;
+  text-align: center;
+}
+input.code-input {
+  width: 110px;
+}
+select {
+  width: 88px;
+  cursor: pointer;
+}
+input:focus,
+select:focus {
+  outline: 1px solid var(--accent);
+}
+
+/* 報價表 */
+.table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+}
+table.quote-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.quote-grid thead th {
+  position: sticky;
+  top: 0;
+  background: #1a1d23;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--glass-border);
+  white-space: nowrap;
+}
+.quote-grid th.l {
+  text-align: left;
+}
+.quote-grid tbody td {
+  padding: 4px 8px;
+  white-space: nowrap;
+  height: 26px;
+}
+.quote-grid tbody tr:nth-child(even) {
+  background: var(--row-overlay);
+}
+.quote-grid tbody tr.selected {
+  background: var(--selection);
+}
+.quote-grid tbody tr.stale {
+  opacity: 0.45;
+}
+.cell-num {
+  text-align: right;
+  font-family: var(--mono);
+}
+.cell-text {
+  text-align: left;
+}
+.cell-kind {
+  text-align: left;
+  color: var(--muted);
+  font-size: 11px;
+}
+.cell-muted {
+  color: var(--muted);
+}
+.trim {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 漲跌上色 */
+.up {
+  color: var(--up);
+}
+.down {
+  color: var(--down);
+}
+.flat {
+  color: var(--flat);
+}
+.bold {
+  font-weight: 600;
+}
+
+/* 精簡模式列 */
+.compact-list {
+  margin-top: 2px;
+  flex: 0 0 auto;
+}
+.compact-row {
+  display: grid;
+  grid-template-columns: 54px 76px 1fr 86px 66px;
+  align-items: center;
+  height: 26px;
+}
+.compact-row.selected {
+  background: var(--selection);
+  border-radius: 4px;
+}
+.compact-row .c-code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding-left: 2px;
+}
+.compact-row .c-name {
+  font-size: 12px;
+  padding-left: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.compact-row canvas.c-spark {
+  width: 100%;
+  height: 18px;
+  display: block;
+  margin: 0 6px;
+}
+.compact-row .c-last {
+  text-align: right;
+  font-weight: 600;
+  padding-right: 4px;
+  font-family: var(--mono);
+}
+.compact-row .c-pct {
+  text-align: right;
+  font-size: 12px;
+  padding-right: 4px;
+  font-family: var(--mono);
+}
+
+/* 編輯列 */
+.edit-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  flex: 0 0 auto;
+}
+.edit-row .gap {
+  margin-left: 12px;
+}
+
+/* 狀態列 */
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex: 0 0 auto;
+  min-height: 16px;
+}
+.err {
+  color: var(--error);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.busy {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 11px;
+  display: none;
+}
+
+/* 捲軸 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #384150;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
