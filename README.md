@@ -16,47 +16,23 @@ WPF (.NET 8) 桌面小工具，用公開來源顯示台灣股票、指數與期�
 - 設定與清單存在 `%APPDATA%\TwMarketWidget\settings.json`
 - 這一輪抓不到的商品會整列變淡，不會拿舊值假裝是新的
 
-## 執行
+## 下載
+
+到 [Releases](https://github.com/higumalu/tw-market-widget/releases) 抓 win-x64 單一執行檔：
+
+| 檔名 | 說明 |
+| --- | --- |
+| `…-framework-dependent.zip` | 約 0.3 MB，需要先裝 [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| `…-self-contained.zip` | 約 65 MB，內含執行環境，解壓縮就能跑 |
+
+## 從原始碼執行
 
 ```powershell
 dotnet run --project TwMarketWidget.csproj
 ```
 
-或直接跑編好的執行檔：
-
-```powershell
-dotnet build -c Release
-.\bin\Release\net8.0-windows\TwMarketWidget.exe
-```
-
-### 診斷模式
-
-```powershell
-.\bin\Debug\net8.0-windows\TwMarketWidget.exe --selftest
-```
-
-不開視窗，直接打一次 API，把結果寫到 `%TEMP%\TwMarketWidget-selftest.txt`。資料源掛掉或欄位改版時先用這個確認。
-
-未預期的例外會寫到 `%TEMP%\TwMarketWidget-crash.txt`（無邊框視窗出事時不會只是無聲消失）。
-
-## 發佈
-
-推一個 `v` 開頭的 tag 就會跑 `.github/workflows/release.yml`，自動建置並開一個 GitHub Release：
-
-```powershell
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-每次會產出兩包 win-x64 單一執行檔：
-
-| 檔名 | 說明 |
-| --- | --- |
-| `TwMarketWidget-<版本>-win-x64-framework-dependent.zip` | 約 0.3 MB，需要先裝 [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| `TwMarketWidget-<版本>-win-x64-self-contained.zip` | 約 65 MB，內含執行環境，解壓縮就能跑 |
-
-也可以在 Actions 頁面手動觸發（`workflow_dispatch`），只會產生 artifact、不會建 Release。
-tag 上的版本號會寫進組件版本，例如 `v1.2.3` → `1.2.3`。
+沒有任何 NuGet 依賴，有 .NET 8 SDK（含 Windows Desktop）就能 build。
+診斷、驗證與發佈流程見 [docs/development.md](docs/development.md)。
 
 ## 新增商品
 
@@ -80,32 +56,17 @@ tag 上的版本號會寫進組件版本，例如 `v1.2.3` → `1.2.3`。
 | 期交所 MIS | `POST https://mis.taifex.com.tw/futures/api/getChartData1M` | 期貨當日一分鐘 K，走勢線的底 |
 | Yahoo Finance | `GET https://query1.finance.yahoo.com/v8/finance/chart/2330.TW?interval=1m&range=1d` | 股票／指數走勢線的底 |
 
-走勢線的畫法：先跟上面的分時 API 要一份「開盤到現在」鋪底，之後每次輪詢把即時價接在後面，所以線的尾巴是即時的。
-證交所 MIS 原本的 `getChartInfo.jsp` 已經下架（現在回 404），股票那段底線才改用 Yahoo；Yahoo 的台股分時大約延遲 15～20 分鐘，
-所以剛開程式時線的尾端到現在之間會有一小段直線，隨著輪詢累積就會補起來。抓不到底線的商品（例如櫃買指數）就從程式啟動開始畫。
+走勢線的畫法：先跟分時 API 要一份「開盤到現在」鋪底，之後每次輪詢把即時價接在後面，所以線的尾巴是即時的。
+Yahoo 的台股分時大約延遲 15～20 分鐘，所以剛開程式時線的尾端到現在之間會有一小段直線，隨著輪詢累積就會補起來；
+抓不到底線的商品（例如櫃買指數）就從程式啟動開始畫。
 
-實作上的幾個坑（都已經處理）：
+這些都是官網前端在用的公開端點，沒有 SLA，也可能改版；資料延遲以官方頁面為準，僅供參考，不要拿來當下單依據。
+完整的欄位對照表、curl 範例與踩過的坑寫在 [docs/data-sources.md](docs/data-sources.md)。
 
-- 證交所 `msgArray` 的 `z`（成交價）在盤前或當下無成交時是 `"-"`，程式會退回用最佳買價、再退回開盤價。
-- 證交所回應帶 `userDelay: 5000`，也就是官方建議 5 秒輪詢一次；預設值就照這個設。輪太快有被擋的風險。
-- 期交所的 request body 欄位必須是 **PascalCase**（`CID`、`RowSize`…）。用 `PostAsJsonAsync` 的預設 Web 慣例會被轉成 camelCase，伺服器認不得商品別，會一律回台指期的清單。
-- 期交所 `QuoteList` 第一筆是現貨（`TXF-S`），後面才是期貨（`-F`），而且小台的清單裡混著週契約（`MX2H6`）。近月要取「代號以 CID 開頭」的第一筆才會是標準月契約。
-- 期交所的 `CRefPrice` 是前一交易日結算價，漲跌以它為基準。
+## 文件
 
-這兩個都是官網前端在用的公開端點，沒有 SLA，也可能改版；資料延遲以官方頁面為準，僅供參考，不要拿來當下單依據。
-
-## 結構
-
-```
-Models/        WatchSymbol、Quote、PricePoint
-Services/      TwseQuoteSource、TaifexQuoteSource、QuoteService（即時報價彙整）
-               YahooIntradaySource、TaifexIntradaySource、IntradayService（走勢線）
-               SettingsStore
-ViewModels/    MainViewModel、QuoteRowViewModel、簡易 MVVM 基底
-Controls/      Sparkline（自己畫的迷你走勢線，沒有圖表函式庫）
-Converters/    漲跌上色、數字格式
-Themes/Dark.xaml   深色樣式（含半透明視窗用的 ComboBox／按鈕樣板）
-```
-
-新增即時報價來源實作 `IQuoteSource`，新增走勢線來源實作 `IIntradaySource`，再塞進 `MainViewModel` 建構的
-`QuoteService` / `IntradayService` 就好。
+| 文件 | 內容 |
+| --- | --- |
+| [docs/architecture.md](docs/architecture.md) | 專案結構、資料流、走勢線與半透明視窗的實作決策 |
+| [docs/data-sources.md](docs/data-sources.md) | 四個 API 的完整契約、欄位對照表、實測範例與坑 |
+| [docs/development.md](docs/development.md) | 環境、診斷模式、UI 驗證方式、發佈流程與打包細節 |
