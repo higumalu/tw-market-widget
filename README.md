@@ -25,14 +25,37 @@ WPF (.NET 8) 桌面小工具，用公開來源顯示台灣股票、指數與期�
 | `…-framework-dependent.zip` | 約 0.3 MB，需要先裝 [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
 | `…-self-contained.zip` | 約 65 MB，內含執行環境，解壓縮就能跑 |
 
-## 從原始碼執行
+## 自己從原始碼建置
+
+如果公司的防毒／端點防護會攔從網路下載的執行檔（Apex One、CrowdStrike 這類常見的行為監控就會），
+自己 build 出來的檔案不帶下載來源標記，通常就不會被擋，反而比抓 Release 省事。
+
+需要 [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)（要含 Windows Desktop，
+裝好後 `dotnet --list-runtimes` 應該看得到 `Microsoft.WindowsDesktop.App`）。專案**沒有任何 NuGet 依賴**，
+clone 下來直接建就好：
 
 ```powershell
+git clone https://github.com/higumalu/tw-market-widget.git
+cd tw-market-widget
+
+# 直接跑（開發用）
 dotnet run --project TwMarketWidget.csproj
+
+# 建一份平常在用的執行檔
+dotnet build -c Release
+.\bin\Release\net8.0-windows\TwMarketWidget.exe
 ```
 
-沒有任何 NuGet 依賴，有 .NET 8 SDK（含 Windows Desktop）就能 build。
-診斷、驗證與發佈流程見 [docs/development.md](docs/development.md)。
+想要一份不必裝 .NET Runtime、複製到別台就能跑的：
+
+```powershell
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist
+```
+
+`dist` 裡除了 `TwMarketWidget.exe`，還會有 `wpfgfx_cor3.dll` 等 5 個原生 DLL——WPF 沒辦法把它們併進單一檔案，
+整個資料夾一起複製就好。
+
+診斷模式、UI 驗證方式與發佈流程見 [docs/development.md](docs/development.md)。
 
 ## 新增商品
 
