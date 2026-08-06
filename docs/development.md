@@ -12,6 +12,16 @@ dotnet run --project TwMarketWidget.csproj
 dotnet build -c Release
 ```
 
+或用 `build.ps1`（會先檢查 SDK、`dotnet` 不在 PATH 時會自己去標準路徑找）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Run -Shortcut
+.\build.ps1 -Publish               # 產生 dist\，免安裝 Runtime
+```
+
+> **改 `build.ps1` 時注意**：檔案裡有中文，必須存成 **UTF-8 with BOM**。
+> Windows PowerShell 5.1 會把沒有 BOM 的 `.ps1` 當成系統 ANSI 編碼讀，中文字串跟註解會變亂碼並直接噴語法錯誤。
+
 ## 診斷模式
 
 ```powershell

@@ -30,30 +30,32 @@ WPF (.NET 8) 桌面小工具，用公開來源顯示台灣股票、指數與期�
 如果公司的防毒／端點防護會攔從網路下載的執行檔（Apex One、CrowdStrike 這類常見的行為監控就會），
 自己 build 出來的檔案不帶下載來源標記，通常就不會被擋，反而比抓 Release 省事。
 
-需要 [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)（要含 Windows Desktop，
-裝好後 `dotnet --list-runtimes` 應該看得到 `Microsoft.WindowsDesktop.App`）。專案**沒有任何 NuGet 依賴**，
-clone 下來直接建就好：
+需要 [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)（要含 Windows Desktop）。
+專案**沒有任何 NuGet 依賴**，clone 下來跑 `build.ps1` 就好：
 
 ```powershell
 git clone https://github.com/higumalu/tw-market-widget.git
 cd tw-market-widget
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Run -Shortcut
+```
 
-# 直接跑（開發用）
-dotnet run --project TwMarketWidget.csproj
+腳本會檢查 SDK、建置，然後啟動並在桌面放一個捷徑。
+（`dotnet` 裝好卻不在 PATH 上是常見狀況——安裝完沒重開終端機就會這樣——腳本會自己去標準路徑找。）
 
-# 建一份平常在用的執行檔
+| 參數 | 作用 |
+| --- | --- |
+| （不加參數） | 建置 Release，印出執行檔位置 |
+| `-Run` | 建置完直接啟動 |
+| `-Shortcut` | 在桌面建立捷徑 |
+| `-Publish` | 產生 `dist\`，不必裝 .NET Runtime，整個資料夾複製到別台就能跑 |
+| `-Configuration Debug` | 建 Debug 版 |
+
+不想用腳本的話，手動也是兩行：
+
+```powershell
 dotnet build -c Release
 .\bin\Release\net8.0-windows\TwMarketWidget.exe
 ```
-
-想要一份不必裝 .NET Runtime、複製到別台就能跑的：
-
-```powershell
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist
-```
-
-`dist` 裡除了 `TwMarketWidget.exe`，還會有 `wpfgfx_cor3.dll` 等 5 個原生 DLL——WPF 沒辦法把它們併進單一檔案，
-整個資料夾一起複製就好。
 
 診斷模式、UI 驗證方式與發佈流程見 [docs/development.md](docs/development.md)。
 

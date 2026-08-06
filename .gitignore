@@ -1,6 +1,11 @@
 # 建置產出
 bin/
 obj/
+dist/
+
+# 簽章憑證，千萬別進版控
+*.pfx
+*.snk
 
 # Visual Studio / Rider / VS Code
 .vs/
